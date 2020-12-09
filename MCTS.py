@@ -1,6 +1,7 @@
 import numpy, math, scipy.stats, norm
 import matplotlib.pyplot as plt
 import binarytree as bt
+import time
 from binarytree import Node
 
 # Assume that the number MCTS-iterations starting in a specific root node is limited (e.g. to 10 or 50). Make a similar
@@ -34,17 +35,15 @@ def buildTree(doprint = False):
         print('\nList from binary tree :', binary_tree.values)
     return binary_tree
 
-def MCTS(node):
-    node.pprint()
-    height = depth-1 #height is # of connections, depth = # of nodes
-    #TODO: height > 1?
-    while node.height > 1:
-        print(height)
-        node = MCTS_snowcap(node, height) #returns new root
-        node.pprint()
-        height = height - 1 # ensures backup doesn't backs too far up
 
+def MCTS(node, doprint = False):
+    height = depth-1 #height is # of connections, depth = # of nodes
+    while node.height > 1:
+        node = MCTS_snowcap(node, height) #returns new root
+        if doprint: print("Height = ", height), node.pprint()
+        height = height - 1 # ensures backup doesn't backs too far up
     return selection(node)
+
 
 def MCTS_snowcap(node, height):
     current_root = node
@@ -77,9 +76,6 @@ def backup(node, terminalValue, height):
     node.numberVisits = node.numberVisits + 1
     if node.height == height:
         return node
-
-    # if parent.height == height:
-    #     return parent # root node
     else:
         parent = bt.get_parent(root, node)
         return backup(parent, terminalValue, height)
@@ -93,6 +89,7 @@ def rollOut(node):
         return rollOut(node.left)
     else:
         return rollOut(node.right)
+
 
 def selection(node):
     # Safety check:
@@ -108,43 +105,42 @@ def selection(node):
     else:
         return node.right
 
+
 def UCB(node, numberVisitsParent):
     # 1.1 Tree policy: UCB(node_i) = mean_node_value + c*sqrt( (logNumberVisitsParents)/(numberVisitsNode) )
     # Ensure UCB does not crash/return random value when leaf node is encountered. Now it chooses max value in selection
     if node.left is None and node.right is None:  # no children
         return node.value, 1
     elif node.numberVisits == 0:
-        #TODO: look into this
         return math.inf, 0
     else:
-        # print("Value parent = ", bt.get_parent(root, node).value)
-        # print("numberVisitsparent = ", numberVisitsParent)
-        # print("numberVisitsparent = ", bt.get_parent(root, node).numberVisits)
-        # print("Value node = ", node.value)
-        # print("numberVisitsnode = ",node.numberVisits, "\n")
-
         ucb = node.tNode / node.numberVisits + c * math.sqrt(
             math.log(numberVisitsParent, 10) / node.numberVisits)
         return ucb, 0
+
 
 def getMaxLeaves(node):
     levels = node.levels
     lastLevel = levels[depth-1]
     values = []
-    for i in range(len(lastLevel)):
-        values.append(lastLevel[i].value)
+    for index in range(len(lastLevel)):
+        values.append(lastLevel[index].value)
     return sorted(values, reverse=True)
-    # maxValue = 0
-    # for i in range(len(lastLevel)):
-    #     if lastLevel[i].value > maxValue:
-    #         maxValue = lastLevel[i].value
-    # return maxValue
 
 # Collect statistics on the performance and discuss the role of the hyperparameter c in the UCB-score.
-tree = buildTree(doprint=False)
-root = tree
-max = getMaxLeaves(root)
-returned = MCTS(tree) #root node
-print(max.index(returned.value),"/", 2**(depth-1),"\n value = ", returned.value)
+#TODO: Collect statistics
 
+start_time = time.time()
+average = []
+for i in range(100):
+    tree = buildTree(doprint=False)
+    root = tree #root is essential for finding parent
+    max = getMaxLeaves(root)
+    returned = MCTS(tree).value  # root node
+    average.append(max.index(returned))
+    print(max.index(returned),"/", 2**(depth-1),"\nvalue = ", returned)
+
+elapsed_time = time.time() - start_time
+print("Average = ", sum(average)/len(average)) #Ran on 09/12 16:18, average = 335.62
+print("Time = ", elapsed_time)
 
