@@ -10,6 +10,7 @@ number_of_MCTS_iterations_in_root_node = 30
 number_of_roll_outs_snowcap = 3
 depth = 12
 c = 2
+root = Node
 
 # Construct a binary tree (each node has two child nodes) of depth d = 12 (or more – if you’re feeling lucky) and assign
 # different values to each of the 2d leaf-nodes. Specifically, pick the leaf values to be real numbers randomly
@@ -96,6 +97,7 @@ def backup(node, terminalValue, height, backdown):
         parent = bt.get_parent(root, node)
         # Saves path so path root -> this node remembered, for multiple rollouts
         if parent.left == node:
+            #TODO implemente FILO structure
             backdown.insert(0, 'left')
         else:
             backdown.insert(0, 'right')
@@ -151,24 +153,51 @@ def getMaxLeaves(node):
 # Collect statistics on the performance and discuss the role of the hyperparameter c in the UCB-score.
 #TODO: Collect statistics
 
-start_time = time.time()
-avgIndex = []
-avgValue = []
+def test():
+    start_time = time.time()
+    avgIndexI = []
+    avgValueI = []
+    avgPercentI = []
 
-for i in range(1):
-    tree = buildTree(doprint=False)
-    root = tree #root is essential for finding parent
-    max = getMaxLeaves(root)
-    returned = MCTS(tree).value  # root value
-    avgIndex.append(max.index(returned))
-    avgValue.append(returned)
-    print(max.index(returned),"/", 2**(depth-1),"\nvalue = ", returned)
+    for i in range(8):
+        global c
+        c = i/2
+        avgIndex = []
+        avgValue = []
+        for j in range(1):
+            tree = buildTree(doprint=False)
+            global root
+            root = tree  # root is essential for finding parent
+            max = getMaxLeaves(root)
+            returned = MCTS(tree).value  # root value
+            avgIndex.append(max.index(returned))
+            avgValue.append(returned)
+            print("i = ", i, "\nj = ", j, '\n', max.index(returned), "/", 2 ** (depth - 1), "\nvalue = ", returned, '\n')
+        averageIndex = sum(avgIndex) / len(avgIndex)
+        averagePercentage = averageIndex / (2 ** (depth - 1) / 100)
+        averageValue = sum(avgValue) / len(avgValue)
+        print("Average index= ", averageIndex)  # Ran on 09/12 16:18, average = 335.62
+        print("Average value= ", averageValue)
+        print("Average percent= ", averagePercentage)
+        avgIndexI.append(averageIndex)
+        avgValueI.append(averageValue)
+        avgPercentI.append(averagePercentage)
+    elapsed_time = time.time() - start_time
+    print("Time = ", elapsed_time)
+    return avgIndexI, avgValueI, avgPercentI
 
-elapsed_time = time.time() - start_time
-averageIndex = sum(avgIndex)/len(avgIndex)
-percentage = averageIndex / (2**(depth-1)/100)
-print("Average index= ", averageIndex) #Ran on 09/12 16:18, average = 335.62
-print("Average value= ", sum(avgValue)/len(avgValue))
-print("Average percent= ", percentage)
-print("Time = ", elapsed_time)
+
+def plot(avgIndex, avgValue, avgPercent):
+    cxaxis = numpy.linspace(0.5, 0, 4)
+    plt.plot(cxaxis, avgValue, label = "Average Value")
+    plt.plot(cxaxis, avgPercent, label="Average Percentage")
+    plt.xlabel("c")
+    plt.ylabel("Value / Percentage")
+    plt.title("Average value and Average percentage for different c in MCTS with UCB")
+    plt.legend()
+    plt.show()
+
+
+plot(test())
+
 
