@@ -9,7 +9,6 @@ from binarytree import Node
 number_of_MCTS_iterations_in_root_node = 30
 number_of_roll_outs_snowcap = 3
 depth = 12
-c = 2
 root = Node
 
 # Construct a binary tree (each node has two child nodes) of depth d = 12 (or more – if you’re feeling lucky) and assign
@@ -150,45 +149,53 @@ def getMaxLeaves(node):
         values.append(lastLevel[index].value)
     return sorted(values, reverse=True)
 
-# Collect statistics on the performance and discuss the role of the hyperparameter c in the UCB-score.
-#TODO: Collect statistics
 
+# Collect statistics on the performance and discuss the role of the hyperparameter c in the UCB-score.
 def test():
     start_time = time.time()
     avgIndexI = []
     avgValueI = []
     avgPercentI = []
 
-    for i in range(8):
-        global c
-        c = i/2
+    global c
+    while c < cMax+cIncrement:
+        print(cMax)
         avgIndex = []
         avgValue = []
-        for j in range(1):
+        for j in range(10):
             tree = buildTree(doprint=False)
             global root
             root = tree  # root is essential for finding parent
-            max = getMaxLeaves(root)
+            maxLeaves = getMaxLeaves(root)
             returned = MCTS(tree).value  # root value
-            avgIndex.append(max.index(returned))
+            avgIndex.append(maxLeaves.index(returned))
             avgValue.append(returned)
-            print("i = ", i, "\nj = ", j, '\n', max.index(returned), "/", 2 ** (depth - 1), "\nvalue = ", returned, '\n')
-        averageIndex = sum(avgIndex) / len(avgIndex)
-        averagePercentage = averageIndex / (2 ** (depth - 1) / 100)
-        averageValue = sum(avgValue) / len(avgValue)
-        print("Average index= ", averageIndex)  # Ran on 09/12 16:18, average = 335.62
-        print("Average value= ", averageValue)
-        print("Average percent= ", averagePercentage)
-        avgIndexI.append(averageIndex)
-        avgValueI.append(averageValue)
-        avgPercentI.append(averagePercentage)
+            print("c = ", c, "\nj = ", j, '\n', maxLeaves.index(returned), "/", 2 ** (depth - 1), "\nvalue = ", returned, '\n')
+            averageIndex = sum(avgIndex) / len(avgIndex)
+            averagePercentage = 100 - (averageIndex / (2 ** (depth - 1) / 100))
+            averageValue = sum(avgValue) / len(avgValue)
+            print("Average index= ", averageIndex, "\nAverage value= ", averageValue, "\nAverage percent= ", averagePercentage)  # Ran on 09/12 16:18, average = 335.62
+            avgIndexI.append(averageIndex)
+            avgValueI.append(averageValue)
+            avgPercentI.append(averagePercentage)
+
+        print("c = ", c)
+        c = c + cIncrement
+        print("c = ", c)
+
+
     elapsed_time = time.time() - start_time
     print("Time = ", elapsed_time)
     return avgIndexI, avgValueI, avgPercentI
 
 
-def plot(avgIndex, avgValue, avgPercent):
-    cxaxis = numpy.linspace(0.5, 0, 4)
+def plotP(avgIndex, avgValue, avgPercent):
+    #cxaxis = numpy.linspace(cIncrement, 0, cMax)
+    cxaxis = []
+    i = 0
+    while i < cMax + cIncrement:
+        cxaxis.append(i)
+        i = i+cIncrement
     plt.plot(cxaxis, avgValue, label = "Average Value")
     plt.plot(cxaxis, avgPercent, label="Average Percentage")
     plt.xlabel("c")
@@ -198,6 +205,11 @@ def plot(avgIndex, avgValue, avgPercent):
     plt.show()
 
 
-plot(test())
+c = 0
+cMax = 2
+cIncrement = 0.5
+
+avgIndexI, avgValueI, avgPercentI = test()
+plotP(avgIndexI, avgValueI, avgPercentI)
 
 
