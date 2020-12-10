@@ -47,9 +47,8 @@ def MCTS(node, doprint = False):
 
 def MCTS_snowcap(node, height):
     current_root = node
-    for i in range(number_of_roll_outs_snowcap):
+    for i in range(number_of_MCTS_iterations_in_root_node):
         current_root = MCTS_once(current_root, height) #same root node
-    # TODO: do you always go down one layer?
     # Tree policy: choose child node with best (finite) UCB
     current_root = selection(current_root)
     return current_root
@@ -59,26 +58,48 @@ def MCTS_snowcap(node, height):
 def MCTS_once(node, height): #root node
     # 1. Selection
     current = selection(node) #new selection node
+    #TODO: check expansion
     # 2. Expansion
     while current.numberVisits > 0:
+        # Safety check
         if current.left is None and current.right is None:  # no children
             break
         current = selection(current) #expanded node
-    # 3. Simulation: Roll out
+    for leaf in range(number_of_roll_outs_snowcap-1):
+        # 3. Simulation: Roll out
+        terminalValue = rollOut(current)
+        # 4. Back-up
+        backdown = []
+        current, backdown = backup(current, terminalValue, height, backdown) #backup returns root node
+        current = backDown(current, backdown)
+    backdown = []
     terminalValue = rollOut(current)
-    # 4. Back-up
-    current = backup(current, terminalValue, height) #backup returns root node
+    current, backdown = backup(current, terminalValue, height, backdown)  # backup returns root node
     return current #root node again
 
+def backDown(node, backdown):
+    for nodes in range(len(backdown)):
+        if backdown[nodes] == "left":
+            node = node.left
+        else:
+            node = node.right
+    return node
 
-def backup(node, terminalValue, height):
+
+
+def backup(node, terminalValue, height, backdown):
     node.tNode = node.tNode + terminalValue
     node.numberVisits = node.numberVisits + 1
     if node.height == height:
-        return node
+        return node, backdown
     else:
         parent = bt.get_parent(root, node)
-        return backup(parent, terminalValue, height)
+        # Saves path so path root -> this node remembered, for multiple rollouts
+        if parent.left == node:
+            backdown.insert(0, 'left')
+        else:
+            backdown.insert(0, 'right')
+        return backup(parent, terminalValue, height, backdown)
 
 
 def rollOut(node):
@@ -132,7 +153,7 @@ def getMaxLeaves(node):
 
 start_time = time.time()
 average = []
-for i in range(100):
+for i in range(5):
     tree = buildTree(doprint=False)
     root = tree #root is essential for finding parent
     max = getMaxLeaves(root)
