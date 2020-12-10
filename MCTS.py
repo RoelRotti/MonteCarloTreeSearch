@@ -152,16 +152,23 @@ def getMaxLeaves(node):
 #TODO: Collect statistics
 
 start_time = time.time()
-average = []
-for i in range(5):
+avgIndex = []
+avgValue = []
+
+for i in range(1):
     tree = buildTree(doprint=False)
     root = tree #root is essential for finding parent
     max = getMaxLeaves(root)
-    returned = MCTS(tree).value  # root node
-    average.append(max.index(returned))
+    returned = MCTS(tree).value  # root value
+    avgIndex.append(max.index(returned))
+    avgValue.append(returned)
     print(max.index(returned),"/", 2**(depth-1),"\nvalue = ", returned)
 
 elapsed_time = time.time() - start_time
-print("Average = ", sum(average)/len(average)) #Ran on 09/12 16:18, average = 335.62
+averageIndex = sum(avgIndex)/len(avgIndex)
+percentage = averageIndex / (2**(depth-1)/100)
+print("Average index= ", averageIndex) #Ran on 09/12 16:18, average = 335.62
+print("Average value= ", sum(avgValue)/len(avgValue))
+print("Average percent= ", percentage)
 print("Time = ", elapsed_time)
 
