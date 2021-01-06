@@ -4,12 +4,7 @@ import binarytree as bt
 import time
 from binarytree import Node
 
-# Assume that the number MCTS-iterations starting in a specific root node is limited (e.g. to 10 or 50). Make a similar
-# assumption for the number of roll-outs starting in a particular (”snowcap”) leaf node (e.g. 1 or 5).
-number_of_MCTS_iterations_in_root_node = 30
-number_of_roll_outs_snowcap = 3
-depth = 12
-root = Node
+
 
 # Construct a binary tree (each node has two child nodes) of depth d = 12 (or more – if you’re feeling lucky) and assign
 # different values to each of the 2d leaf-nodes. Specifically, pick the leaf values to be real numbers randomly
@@ -157,12 +152,15 @@ def test():
     avgValueI = []
     avgPercentI = []
 
-    global c
-    while c < cMax+cIncrement:
-        print(cMax)
+    global cList
+    # while c < cMax+cIncrement:
+    #     print(cMax)
+    for i in range(len(cList)):
+        global c
+        c = cList[i]
         avgIndex = []
         avgValue = []
-        for j in range(10):
+        for j in range(test_iteration_per_c_value):
             tree = buildTree(doprint=False)
             global root
             root = tree  # root is essential for finding parent
@@ -171,45 +169,69 @@ def test():
             avgIndex.append(maxLeaves.index(returned))
             avgValue.append(returned)
             print("c = ", c, "\nj = ", j, '\n', maxLeaves.index(returned), "/", 2 ** (depth - 1), "\nvalue = ", returned, '\n')
-            averageIndex = sum(avgIndex) / len(avgIndex)
-            averagePercentage = 100 - (averageIndex / (2 ** (depth - 1) / 100))
-            averageValue = sum(avgValue) / len(avgValue)
-            print("Average index= ", averageIndex, "\nAverage value= ", averageValue, "\nAverage percent= ", averagePercentage)  # Ran on 09/12 16:18, average = 335.62
-            avgIndexI.append(averageIndex)
-            avgValueI.append(averageValue)
-            avgPercentI.append(averagePercentage)
 
-        print("c = ", c)
-        c = c + cIncrement
-        print("c = ", c)
+        averageIndex = sum(avgIndex) / len(avgIndex)
+        averagePercentage = 100 - (averageIndex / (2 ** (depth - 1) / 100))
+        averageValue = sum(avgValue) / len(avgValue)
+        print("Average index= ", averageIndex, "\nAverage value= ", averageValue, "\nAverage percent= ", averagePercentage)  # Ran on 09/12 16:18, average = 335.62
+        avgIndexI.append(averageIndex)
+        avgValueI.append(averageValue)
+        avgPercentI.append(averagePercentage)
 
+        # print("c = ", c)
+        # c = c + cIncrement
+        # print("c = ", c)
 
     elapsed_time = time.time() - start_time
     print("Time = ", elapsed_time)
     return avgIndexI, avgValueI, avgPercentI
 
 
+# Assume that the number MCTS-iterations starting in a specific root node is limited (e.g. to 10 or 50). Make a similar
+# assumption for the number of roll-outs starting in a particular (”snowcap”) leaf node (e.g. 1 or 5).
+number_of_MCTS_iterations_in_root_node = 5
+number_of_roll_outs_snowcap = 1
+test_iteration_per_c_value = 20
+depth = 16
+root = Node
+cList = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
+c = cList[0]
+
+# cMax = 0.5
+# cIncrement = 0.5
+
+
 def plotP(avgIndex, avgValue, avgPercent):
-    #cxaxis = numpy.linspace(cIncrement, 0, cMax)
-    cxaxis = []
+    increment = cList[-1]/0.5
+    #cxaxis = numpy.linspace(cList[0], cList[-1], int(increment))
+    cxaxis = cList
+    # baseline = []
+    # cxaxis = []
     i = 0
-    while i < cMax + cIncrement:
-        cxaxis.append(i)
-        i = i+cIncrement
+    #while i < cMax + cIncrement:
+    # for i in range(len(c)):
+    #     baseline.append(50)
+    #     cxaxis.append(i)
+    #     i = i+cIncrement
     plt.plot(cxaxis, avgValue, label = "Average Value")
     plt.plot(cxaxis, avgPercent, label="Average Percentage")
+    baseline = plt.hlines(50, cList[0], cList[-1], label="Baseline")
+    #plt.plot(cxaxis, baseline, label="Baseline")
     plt.xlabel("c")
     plt.ylabel("Value / Percentage")
-    plt.title("Average value and Average percentage for different c in MCTS with UCB")
+    plt.title("Average value and Average percentage for different c in MCTS with UCB\n #rollouts = {}, #MCTS iterations root node = {}, #iterations per c = {}".format(number_of_roll_outs_snowcap, number_of_MCTS_iterations_in_root_node, test_iteration_per_c_value))
+    #plt.title("MCTS iterations = ", number_of_MCTS_iterations_in_root_node, ", #rollouts = ", number_of_roll_outs_snowcap)#,
+              #"test iterations = ", test_iteration_per_c_value)
     plt.legend()
+    # plt.savefig('MCTS.png')
+    # plt.savefig('MCTS.pdf')
     plt.show()
 
 
-c = 0
-cMax = 2
-cIncrement = 0.5
-
 avgIndexI, avgValueI, avgPercentI = test()
+print(avgIndexI)
+print(avgValueI)
+print(avgPercentI)
 plotP(avgIndexI, avgValueI, avgPercentI)
 
 
