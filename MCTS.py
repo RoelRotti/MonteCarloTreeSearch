@@ -189,10 +189,10 @@ def test():
 
 # Assume that the number MCTS-iterations starting in a specific root node is limited (e.g. to 10 or 50). Make a similar
 # assumption for the number of roll-outs starting in a particular (”snowcap”) leaf node (e.g. 1 or 5).
-number_of_MCTS_iterations_in_root_node = 5
-number_of_roll_outs_snowcap = 1
-test_iteration_per_c_value = 20
-depth = 16
+number_of_MCTS_iterations_in_root_node = 3
+number_of_roll_outs_snowcap = 3
+test_iteration_per_c_value = 10
+depth = 15
 root = Node
 cList = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
 c = cList[0]
